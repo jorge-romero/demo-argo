@@ -1,0 +1,123 @@
+# ArgoCD Project Definition
+#
+# Projects provide logical grouping and access control for applications.
+# This project defines which repositories, clusters, and resources
+# the sync-strategies demo applications can use.
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: sync-strategies-demo
+  namespace: argocd
+  labels:
+    example: sync-strategies
+  # Finalizer to prevent accidental deletion when apps exist
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Project description
+  description: "Demo project for ArgoCD sync strategies examples"
+
+  # Source repositories allowed for this project
+  sourceRepos:
+    - https://github.com/jorge-romero/demo-argo.git
+    # Uncomment for SSH access:
+    # - git@github.com:jorge-romero/demo-argo.git
+
+  # Destination clusters and namespaces allowed
+  destinations:
+    # Allow deployment to any namespace starting with demo-app
+    - namespace: 'demo-app*'
+      server: https://kubernetes.default.svc
+    # Or be more specific:
+    - namespace: demo-app-manual
+      server: https://kubernetes.default.svc
+    - namespace: demo-app-auto
+      server: https://kubernetes.default.svc
+    - namespace: demo-app-self-heal
+      server: https://kubernetes.default.svc
+    - namespace: demo-app-prune
+      server: https://kubernetes.default.svc
+    - namespace: demo-app-full
+      server: https://kubernetes.default.svc
+
+  # Cluster resources that applications can manage
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  # Namespace-scoped resources allowed (empty = all allowed)
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: apps
+      kind: DaemonSet
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+
+  # Deny list for namespace resources (optional)
+  # namespaceResourceBlacklist:
+  #   - group: ''
+  #     kind: ResourceQuota
+
+  # Roles for project-level access control
+  roles:
+    # Read-only role
+    - name: read-only
+      description: "Read-only access to sync-strategies-demo project"
+      policies:
+        - p, proj:sync-strategies-demo:read-only, applications, get, sync-strategies-demo/*, allow
+        - p, proj:sync-strategies-demo:read-only, applications, sync, sync-strategies-demo/*, deny
+      groups:
+        - demo-viewers
+
+    # Developer role - can sync but not delete
+    - name: developer
+      description: "Developer access - can sync applications"
+      policies:
+        - p, proj:sync-strategies-demo:developer, applications, get, sync-strategies-demo/*, allow
+        - p, proj:sync-strategies-demo:developer, applications, sync, sync-strategies-demo/*, allow
+        - p, proj:sync-strategies-demo:developer, applications, delete, sync-strategies-demo/*, deny
+      groups:
+        - demo-developers
+
+    # Admin role - full access
+    - name: admin
+      description: "Admin access - full control"
+      policies:
+        - p, proj:sync-strategies-demo:admin, applications, *, sync-strategies-demo/*, allow
+      groups:
+        - demo-admins
+
+  # Sync windows - control when syncs can occur (optional)
+  # syncWindows:
+  #   - kind: allow
+  #     schedule: '0 * * * *'
+  #     duration: 1h
+  #     applications:
+  #       - '*'
+  #   - kind: deny
+  #     schedule: '0 22 * * *'
+  #     duration: 8h
+  #     applications:
+  #       - '*-prod'
+
+  # Orphaned resources monitoring
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: kube-root-ca.crt

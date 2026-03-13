@@ -1,0 +1,28 @@
+# ArgoCD Repository Registration (Public Repository)
+#
+# For public repositories, you can register them declaratively
+# using a Secret with repository configuration.
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-demo-argo
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+    example: sync-strategies
+stringData:
+  # Repository URL (HTTPS)
+  url: https://github.com/jorge-romero/demo-argo.git
+  
+  # Repository name (optional, for display)
+  name: demo-argo
+  
+  # Project association (optional)
+  project: sync-strategies-demo
+  
+  # Repository type: git or helm
+  type: git
+  
+  # For public repos, no credentials needed
+  # insecure: "false"

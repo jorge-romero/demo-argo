@@ -1,0 +1,51 @@
+# Auto-Sync with Self-Heal Strategy
+#
+# In addition to auto-sync, self-heal ensures that any manual changes
+# made directly to the cluster (kubectl edit, kubectl delete, etc.)
+# will be automatically reverted to match the Git state.
+#
+# ArgoCD will:
+# - Automatically sync when Git changes are detected
+# - Automatically revert any manual changes made to cluster resources
+# - Ensure the cluster always matches Git (single source of truth)
+#
+# Use case: Environments where you want to enforce strict GitOps compliance
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-self-heal
+  namespace: argocd
+  labels:
+    example: sync-strategies
+    strategy: self-heal
+  annotations:
+    description: "Auto-sync with self-heal - reverts manual cluster changes"
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/jorge-romero/demo-argo.git
+    targetRevision: HEAD
+    path: base
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-app-self-heal
+  
+  syncPolicy:
+    automated:
+      # Self-heal: automatically revert manual changes
+      selfHeal: true
+    
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+    
+    # Retry configuration for failed syncs
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

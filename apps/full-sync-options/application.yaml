@@ -1,0 +1,95 @@
+# Full Sync Options - All Features Enabled
+#
+# This configuration combines all sync strategies and demonstrates
+# the full range of syncOptions available in ArgoCD.
+#
+# Features:
+# - Auto-sync: Automatically sync on Git changes
+# - Self-heal: Revert manual cluster changes
+# - Prune: Delete resources removed from Git
+# - All advanced sync options
+#
+# Use case: Mature GitOps environments with full automation
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-full-options
+  namespace: argocd
+  labels:
+    example: sync-strategies
+    strategy: full-options
+  annotations:
+    description: "Full sync options - all features enabled"
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: my-channel
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/jorge-romero/demo-argo.git
+    targetRevision: HEAD
+    path: base
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-app-full
+  
+  syncPolicy:
+    automated:
+      # Automatically sync when Git changes
+      prune: true
+      # Automatically revert manual changes
+      selfHeal: true
+      # Allow sync even when app has missing resources in cluster
+      allowEmpty: false
+    
+    # Comprehensive sync options
+    syncOptions:
+      # Create namespace if it doesn't exist
+      - CreateNamespace=true
+      
+      # Validate resources against Kubernetes schema
+      - Validate=true
+      
+      # Delete resources after all other operations complete
+      - PruneLast=true
+      
+      # How to handle deletion of dependent resources
+      # Options: foreground, background, orphan
+      - PrunePropagationPolicy=foreground
+      
+      # Apply resources using server-side apply
+      - ServerSideApply=true
+      
+      # Replace resources instead of patching (use with caution)
+      # - ApplyOutOfSyncOnly=true
+      
+      # Respect ignore differences annotations
+      - RespectIgnoreDifferences=true
+      
+      # Fail sync if shared resources are being used
+      - FailOnSharedResource=true
+    
+    # Retry failed syncs with exponential backoff
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # Ignore differences for specific fields
+  # Useful for fields that are auto-generated or managed by controllers
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: Service
+      jqPathExpressions:
+        - .spec.clusterIP
+        - .spec.clusterIPs
+  
+  # Revision history limit
+  revisionHistoryLimit: 10

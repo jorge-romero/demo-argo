@@ -1,0 +1,40 @@
+# Auto-Sync Strategy (Basic)
+#
+# ArgoCD will automatically sync when it detects the application is out of sync.
+# This means changes in Git will be automatically applied to the cluster.
+#
+# Important: This does NOT include:
+# - Self-healing (reverting manual changes in cluster)
+# - Pruning (deleting resources removed from Git)
+#
+# Use case: Development/staging environments where you want GitOps automation
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-auto-sync
+  namespace: argocd
+  labels:
+    example: sync-strategies
+    strategy: auto-sync
+  annotations:
+    description: "Auto-sync - automatically syncs when Git changes are detected"
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/jorge-romero/demo-argo.git
+    targetRevision: HEAD
+    path: base
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-app-auto
+  
+  syncPolicy:
+    # Enable automated sync
+    automated: {}
+    
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true

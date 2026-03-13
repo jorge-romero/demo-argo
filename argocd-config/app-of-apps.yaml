@@ -1,0 +1,43 @@
+# App of Apps Pattern
+#
+# This Application manages all other Applications in this repository.
+# It enables GitOps for the ArgoCD Applications themselves.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sync-strategies-apps
+  namespace: argocd
+  labels:
+    example: sync-strategies
+    type: app-of-apps
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: sync-strategies-demo
+  
+  source:
+    repoURL: https://github.com/jorge-romero/demo-argo.git
+    targetRevision: HEAD
+    path: apps
+    directory:
+      recurse: true
+      include: '*.yaml'
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

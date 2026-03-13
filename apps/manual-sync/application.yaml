@@ -1,0 +1,40 @@
+# Manual Sync Strategy
+# 
+# This is the most conservative approach. ArgoCD will:
+# - Detect when the application is out of sync
+# - NOT automatically apply changes
+# - Require manual intervention to sync
+#
+# Use case: Production environments where you want full control over deployments
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-manual-sync
+  namespace: argocd
+  labels:
+    example: sync-strategies
+    strategy: manual
+  annotations:
+    description: "Manual sync - requires explicit user action to sync"
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/jorge-romero/demo-argo.git
+    targetRevision: HEAD
+    path: base
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-app-manual
+  
+  # No syncPolicy block = Manual sync only
+  # ArgoCD will show OutOfSync status but won't auto-sync
+  
+  # Optional: Configure sync options that apply when manually syncing
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+      - PruneLast=true

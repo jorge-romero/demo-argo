@@ -1,0 +1,49 @@
+# Auto-Sync with Prune Strategy
+#
+# Prune enables automatic deletion of resources that are no longer
+# defined in Git. Without prune, removing a resource from Git will
+# leave it orphaned in the cluster.
+#
+# ArgoCD will:
+# - Automatically sync when Git changes are detected
+# - Automatically DELETE cluster resources that are removed from Git
+#
+# WARNING: Be careful with prune in production! Accidentally removing
+# a file from Git could delete production resources.
+#
+# Use case: Environments where you want complete GitOps lifecycle management
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-prune
+  namespace: argocd
+  labels:
+    example: sync-strategies
+    strategy: prune
+  annotations:
+    description: "Auto-sync with prune - deletes resources removed from Git"
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/jorge-romero/demo-argo.git
+    targetRevision: HEAD
+    path: base
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-app-prune
+  
+  syncPolicy:
+    automated:
+      # Prune: automatically delete resources removed from Git
+      prune: true
+    
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+      # PruneLast: delete resources only after all other sync operations complete
+      - PruneLast=true
+      # PrunePropagationPolicy: control how dependents are deleted
+      - PrunePropagationPolicy=foreground

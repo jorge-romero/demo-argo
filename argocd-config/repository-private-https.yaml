@@ -1,0 +1,55 @@
+# ArgoCD Repository Registration (Private Repository - HTTPS)
+#
+# For private repositories using HTTPS authentication.
+# Replace placeholders with actual credentials.
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-demo-argo-private-https
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+    example: sync-strategies
+stringData:
+  # Repository URL
+  url: https://github.com/jorge-romero/demo-argo.git
+  
+  # Authentication: username + password/token
+  username: <github-username>
+  password: <github-personal-access-token>
+  
+  # Repository type
+  type: git
+  
+  # Optional: skip TLS verification (not recommended for production)
+  # insecure: "true"
+  
+  # Optional: custom TLS client certificate
+  # tlsClientCertData: |
+  #   -----BEGIN CERTIFICATE-----
+  #   ...
+  #   -----END CERTIFICATE-----
+  # tlsClientCertKey: |
+  #   -----BEGIN RSA PRIVATE KEY-----
+  #   ...
+  #   -----END RSA PRIVATE KEY-----
+
+---
+# Alternative: Using GitHub App authentication
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-demo-argo-github-app
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  url: https://github.com/jorge-romero/demo-argo.git
+  type: git
+  githubAppID: "<app-id>"
+  githubAppInstallationID: "<installation-id>"
+  githubAppPrivateKey: |
+    -----BEGIN RSA PRIVATE KEY-----
+    <private-key-content>
+    -----END RSA PRIVATE KEY-----
