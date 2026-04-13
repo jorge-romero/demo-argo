@@ -23,25 +23,27 @@ metadata:
     description: "Auto-sync with self-heal - reverts manual cluster changes"
 spec:
   project: default
-  
+
   source:
     repoURL: https://github.com/jorge-romero/demo-argo.git
     targetRevision: HEAD
     path: base
-  
+
   destination:
     server: https://kubernetes.default.svc
     namespace: demo-app-self-heal
-  
+
   syncPolicy:
     automated:
       # Self-heal: automatically revert manual changes
       selfHeal: true
-    
+      enabled: true
+      prune: true
+
     syncOptions:
       - CreateNamespace=true
       - Validate=true
-    
+
     # Retry configuration for failed syncs
     retry:
       limit: 5
